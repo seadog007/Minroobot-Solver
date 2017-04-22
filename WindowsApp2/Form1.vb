@@ -23,11 +23,41 @@
         Return (y - 1) * gamewidth + x
     End Function
     Private Sub recalculate()
+        resetcolor()
         For x = 1 To gamewidth
             For y = 1 To gameheight
                 Dim nine(8) As TextBox
                 Dim thisbox As TextBox
+                Dim minecount As Integer = 0
+                Dim value As Integer = 0
+                nine(0) = getbox(x - 1, y - 1)
+                nine(1) = getbox(x, y - 1)
+                nine(2) = getbox(x + 1, y - 1)
+                nine(3) = getbox(x - 1, y)
+                nine(4) = getbox(x, y)
+                nine(5) = getbox(x + 1, y)
+                nine(6) = getbox(x - 1, y + 1)
+                nine(7) = getbox(x, y + 1)
+                nine(8) = getbox(x + 1, y + 1)
+                thisbox = nine(4)
+                Try
+                    value = Int(thisbox.Text)
+                Catch ex As Exception
+                    value = 99
+                End Try
 
+                If Not thisbox.Text = "" Then
+                    thisbox.BackColor = Color.Red
+                End If
+
+                For i = 0 To nine.Length - 1
+                    If nine(i).Text.ToUpper() = "X" Then
+                        minecount += 1
+                    End If
+                Next
+                If value <= minecount And Not value = 99 Then
+                    cleanaround(nine)
+                End If
             Next
         Next
     End Sub
@@ -35,6 +65,19 @@
         If x <= 0 Or x > gamewidth Or y <= 0 Or y > gameheight Then
             Return New TextBox
         End If
-
+        Return CType(Me.Controls("Box" & getindex(x, y)), TextBox)
     End Function
+    Private Sub cleanaround(ByRef nine As TextBox())
+        For i = 0 To nine.Length - 1
+            nine(i).BackColor = Color.Red
+        Next
+    End Sub
+    Private Sub resetcolor()
+        For x = 1 To gamewidth
+            For y = 1 To gameheight
+                Dim thisbox As TextBox = getbox(x, y)
+                thisbox.BackColor = Color.White
+            Next
+        Next
+    End Sub
 End Class
