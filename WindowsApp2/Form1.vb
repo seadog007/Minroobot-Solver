@@ -28,23 +28,12 @@ Public Class Form1
         Return (y - 1) * gamewidth + x
     End Function
     Private Sub recalculate()
-        resetcolor()
+        resetcolorntag()
         For x = 1 To gamewidth
             For y = 1 To gameheight
-                Dim nine(8) As TextBox
                 Dim thisbox As TextBox
-                Dim minecount As Integer = 0
                 Dim value As Integer = 0
-                nine(0) = getbox(x - 1, y - 1)
-                nine(1) = getbox(x, y - 1)
-                nine(2) = getbox(x + 1, y - 1)
-                nine(3) = getbox(x - 1, y)
-                nine(4) = getbox(x, y)
-                nine(5) = getbox(x + 1, y)
-                nine(6) = getbox(x - 1, y + 1)
-                nine(7) = getbox(x, y + 1)
-                nine(8) = getbox(x + 1, y + 1)
-                thisbox = nine(4)
+                thisbox = getbox(x, y)
                 Try
                     value = Int(thisbox.Text)
                 Catch ex As Exception
@@ -55,17 +44,15 @@ Public Class Form1
                     thisbox.BackColor = Color.Red
                 End If
 
-                For i = 0 To nine.Length - 1
-                    If nine(i).Text.ToUpper() = "X" Then
-                        minecount += 1
-                    End If
-                Next
-                If value <= minecount And Not value = 99 Then
-                    cleanaround(nine)
+                If isfull(x, y, value) And Not value = 99 Then
+                    cleanaround(x, y)
                 End If
             Next
         Next
-        generate_state()
+        If CheckBox1.Checked Then
+            apply_tag(SendRequest(generate_state()))
+        End If
+        apply_color()
     End Sub
     Private Function getbox(ByVal x As Integer, ByVal y As Integer) As TextBox
         If x <= 0 Or x > gamewidth Or y <= 0 Or y > gameheight Then
@@ -73,16 +60,21 @@ Public Class Form1
         End If
         Return CType(Me.Controls("Box" & getindex(x, y)), TextBox)
     End Function
-    Private Sub cleanaround(ByRef nine As TextBox())
-        For i = 0 To nine.Length - 1
-            nine(i).BackColor = Color.Red
+    Private Sub cleanaround(ByVal x As Integer, ByVal y As Integer)
+        Dim box As TextBox
+        For i = -1 To 1
+            For j = -1 To 1
+                box = getbox(x + i, y + j)
+                box.BackColor = Color.Red
+            Next
         Next
     End Sub
-    Private Sub resetcolor()
+    Private Sub resetcolorntag()
         For x = 1 To gamewidth
             For y = 1 To gameheight
                 Dim thisbox As TextBox = getbox(x, y)
                 thisbox.BackColor = Color.White
+                thisbox.Tag = "-1"
             Next
         Next
     End Sub
@@ -97,34 +89,48 @@ Public Class Form1
                     Int(getbox(x, y).Text)
                     Dim obj As New Newtonsoft.Json.Linq.JObject
                     Dim cells As New Newtonsoft.Json.Linq.JArray
+                    Dim mines_around As Integer = 0
                     For i = -1 To 1
                         For j = -1 To 1
                             Dim box As TextBox = getbox(x + i, y + j)
                             If box.Text = "" And Not box.BackColor = Color.Red Then
-                                cells.Add(x + i & "-" & y + j)
+                                If Not (x + i <= 0 Or x + i > gamewidth Or y + j <= 0 Or y + j > gameheight) Then
+                                    cells.Add(x + i & "-" & y + j)
+                                End If
+                            End If
+                            If box.Text = "X" And Not i = 0 And Not j = 0 Then
+                                mines_around += 1
                             End If
                         Next
                     Next
-                    obj.Add("num_mines", CInt(getbox(x, y).Text))
-                    obj.Add("cells", cells)
-                    rule.Add(obj)
-                    count += 1
+                    If Not isfull(x, y, Int(getbox(x, y).Text)) Then
+                        obj.Add("num_mines", CInt(getbox(x, y).Text) - mines_around)
+                        obj.Add("cells", cells)
+                        rule.Add(obj)
+                        count += 1
+                    End If
                 Catch ex As Exception
                 End Try
-                If getbox(x, y).Text = "" And Not getbox(x, y).BackColor = Color.Red Then
+                'If getbox(x, y).Text = "" And Not getbox(x, y).BackColor = Color.Red Then
+                If getbox(x, y).Text = "" Then
                     total_cells += 1
                 End If
             Next
         Next
-        state.Add("rule", rule)
+        state.Add("rules", rule)
         state.Add("total_cells", total_cells)
         state.Add("total_mines", total_mines)
         Return state.ToString
     End Function
-    Private Function SendRequest(uri As Uri, jsonDataBytes As Byte(), contentType As String, method As String) As String
-        Dim req As WebRequest = WebRequest.Create(uri)
-        req.ContentType = contentType
-        req.Method = method
+    Private Function SendRequest(ByVal jsonData As String) As String
+        If CheckBox2.Checked Then
+            MsgBox(jsonData)
+        End If
+        Dim req As WebRequest = WebRequest.Create("http://mrgris.com/app/minesweepr/api/minesweeper_solve/")
+        Dim jsonDataBytes As Byte()
+        jsonDataBytes = System.Text.Encoding.UTF8.GetBytes(jsonData)
+        req.ContentType = "application/x-www-form-urlencodedd"
+        req.Method = "POST"
         req.ContentLength = jsonDataBytes.Length
 
 
@@ -138,7 +144,74 @@ Public Class Form1
         Dim res = reader.ReadToEnd()
         reader.Close()
         response.Close()
-
         Return res
+    End Function
+    Private Sub apply_tag(ByVal s As String)
+        Dim data As Newtonsoft.Json.Linq.JObject = Newtonsoft.Json.Linq.JObject.Parse(s)
+        Dim special(data.GetValue("solution").Count - 1, 2) As String
+        Dim a As Newtonsoft.Json.Linq.JToken()
+        Dim index_other As Integer
+        If data.GetValue("solution").Count = 0 Then
+            Exit Sub
+        End If
+        a = data.GetValue("solution").ToArray
+        For i = 0 To data.GetValue("solution").Count - 1
+            Dim b, c As String()
+            b = Split(a(i).ToString(), ": ")
+            b(0) = b(0).Replace("""", "")
+            If b(0) = "_other" Then
+                index_other = i
+                special(i, 0) = "0"
+                special(i, 1) = "0"
+                special(i, 2) = b(1)
+            Else
+                c = Split(b(0), "-")
+                special(i, 0) = c(0)
+                special(i, 1) = c(1)
+                special(i, 2) = b(1)
+            End If
+        Next
+
+        For x = 1 To gamewidth
+            For y = 1 To gameheight
+                Dim thisbox As TextBox = getbox(x, y)
+                For i = 0 To special.GetLength(0) - 1
+                    If special(i, 0) = x.ToString() And special(i, 1) = y.ToString() Then
+                        thisbox.Tag = special(i, 2)
+                        Exit For
+                    Else
+                        thisbox.Tag = special(index_other, 2)
+                    End If
+                Next
+            Next
+        Next
+    End Sub
+    Private Sub apply_color()
+        For x = 1 To gamewidth
+            For y = 1 To gameheight
+                Dim thisbox As TextBox = getbox(x, y)
+                If Not thisbox.BackColor = Color.Red Then
+                    If Not thisbox.Tag = "-1" Then
+                        thisbox.BackColor = getcolor(CDbl(thisbox.Tag))
+                    End If
+                End If
+            Next
+        Next
+    End Sub
+    Private Function getcolor(ByVal value As Double) As Color
+        Return Color.FromArgb(255 - (value * 255), value * 255, 0)
+    End Function
+    Private Function isfull(ByVal x As Integer, ByVal y As Integer, ByVal value As Integer) As Boolean
+        Dim minecount As Integer
+        Dim box As TextBox
+        For i = -1 To 1
+            For j = -1 To 1
+                box = getbox(x + i, y + j)
+                If box.Text.ToUpper() = "X" Then
+                    minecount += 1
+                End If
+            Next
+        Next
+        Return value <= minecount
     End Function
 End Class
