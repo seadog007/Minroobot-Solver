@@ -17,8 +17,11 @@ Public Class Form1
             For y = 1 To gameheight
                 newbox = New TextBox
                 newbox.Name = "Box" & getindex(x, y)
-                newbox.Width = 22
-                newbox.Location = New Point(newbox.Width * (x - 1) + box_barrx * x + box_initx, newbox.Width * (y - 1) + box_barry * y + box_inity)
+                newbox.Width = 23
+                newbox.Height = 23
+                newbox.TextAlign = HorizontalAlignment.Center
+                newbox.Font = New Font("Arial", 10)
+                newbox.Location = New Point(newbox.Width * (x - 1) + box_barrx * x + box_initx, newbox.Height * (y - 1) + box_barry * y + box_inity)
                 AddHandler newbox.TextChanged, AddressOf recalculate
                 Me.Controls.Add(newbox)
             Next

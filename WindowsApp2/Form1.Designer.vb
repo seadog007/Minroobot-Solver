@@ -29,32 +29,36 @@ Partial Class Form1
         'CheckBox1
         '
         Me.CheckBox1.AutoSize = True
-        Me.CheckBox1.Location = New System.Drawing.Point(295, 501)
+        Me.CheckBox1.Location = New System.Drawing.Point(16, 472)
         Me.CheckBox1.Name = "CheckBox1"
-        Me.CheckBox1.Size = New System.Drawing.Size(187, 28)
+        Me.CheckBox1.Size = New System.Drawing.Size(295, 28)
         Me.CheckBox1.TabIndex = 0
-        Me.CheckBox1.Text = "Possibility Func"
+        Me.CheckBox1.Text = "Possibility Calculating Func"
         Me.CheckBox1.UseVisualStyleBackColor = True
         '
         'CheckBox2
         '
         Me.CheckBox2.AutoSize = True
-        Me.CheckBox2.Location = New System.Drawing.Point(488, 501)
+        Me.CheckBox2.Location = New System.Drawing.Point(366, 472)
         Me.CheckBox2.Name = "CheckBox2"
-        Me.CheckBox2.Size = New System.Drawing.Size(82, 28)
+        Me.CheckBox2.Size = New System.Drawing.Size(186, 28)
         Me.CheckBox2.TabIndex = 1
-        Me.CheckBox2.Text = "Msg"
+        Me.CheckBox2.Text = "Debug Message"
         Me.CheckBox2.UseVisualStyleBackColor = True
         '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(13.0!, 24.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(685, 554)
+        Me.ClientSize = New System.Drawing.Size(579, 519)
         Me.Controls.Add(Me.CheckBox2)
         Me.Controls.Add(Me.CheckBox1)
+        Me.MaximizeBox = False
+        Me.MinimizeBox = False
         Me.Name = "Form1"
-        Me.Text = "Form1"
+        Me.RightToLeftLayout = True
+        Me.ShowIcon = False
+        Me.Text = "@minroobot Calculator"
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
