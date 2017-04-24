@@ -1,0 +1,4 @@
+WindowsApp2/bin/*
+WindowsApp2/obj
+.vs/
+packages
